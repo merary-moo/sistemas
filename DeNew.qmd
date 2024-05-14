@@ -4,23 +4,85 @@ format: pdf
 editor: visual
 ---
 
-## Quarto
+## Análisis Con Series de Tiempo
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+importamos las librerias necesarias:
 
-## Running Code
+```{python}
+#!pip install numpy
+#!pip install pandas
+#!pip install statsmodels
+#!pip install matplotlib
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+import numpy as np
+import pandas as pd
+from statsmodels.tsa.arima.model import ARIMA
+import matplotlib.pyplot as plt
 
-```{r}
-1 + 1
 ```
 
-You can add options to executable code like this
+Para este ejemplo lo que hacemos es generar datos aleatorios:
 
-```{r}
-#| echo: false
-2 * 2
+```{python}
+
+# Generar datos simulados
+np.random.seed(42)
+data = np.random.rand(100) * 200  # 100 meses de datos de ventas
+meses = pd.date_range('2020-01-01', periods=100, freq='ME')
+df = pd.DataFrame(data, index=meses, columns=['Ventas'])
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+En el siguiente paso es importante separa el conjunto de datos en entrenamiento y pruba.
+
+```{python}
+# Dividir en train y test
+train = df.iloc[:-10]
+test = df.iloc[-10:]
+```
+
+Ahora creamos el modelo, en este caso ARIMA
+
+```{python}
+# Modelo ARIMA
+model = ARIMA(train, order=(5,1,0))  # Ejemplo: ARIMA(5,1,0)
+model_fit = model.fit()
+```
+
+Creamos las predicciones:
+
+```{python}
+# Predicción
+forecast = model_fit.forecast(steps=10)
+```
+
+Los margenes de error:
+
+```{python}
+# Métricas de error
+mae = np.mean(np.abs(forecast - test['Ventas']))
+rmse = np.sqrt(np.mean((forecast - test['Ventas'])**2))
+
+print(f'MAE: {mae}')
+print(f'RMSE: {rmse}')
+```
+
+Grafica de los valores reales y las predicciones:
+
+```{python}
+# Gráfica
+plt.figure(figsize=(10, 6))
+plt.plot(train.index, train['Ventas'], label='Datos de Entrenamiento')
+plt.plot(test.index, test['Ventas'], label='Datos Reales')
+plt.plot(test.index, forecast, label='Predicción ARIMA', color='red')
+plt.title('Predicción de Ventas con ARIMA')
+plt.xlabel('Fecha')
+plt.ylabel('Ventas')
+plt.legend()
+plt.show()
+```
+
+```{python}
+  
+  
+  
+```
